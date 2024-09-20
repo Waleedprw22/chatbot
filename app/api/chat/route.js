@@ -113,7 +113,7 @@ export async function POST(req) {
 
     // Step 2: Retrieve relevant documents from Pinecone
     const retrievalResponse = await pc.index('chatbot').namespace('webinfo').query({
-        topK: 3,
+        topK: 1,
         vector: queryEmbedding,
         includeMetadata: true,
         includeValues: true,
