@@ -14,7 +14,7 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-A chatbot area should show up where you can type to ask questions. Note: you will need your own environmental variables to fully run this.
+A chatbot area should show up where you can type to ask questions. Note: you will need your own environmental variables to fully run this. Variables include Pinecone API, HuggingFace API, Groq API and local link to the RAG text file.
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
