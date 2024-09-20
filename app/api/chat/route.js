@@ -132,7 +132,7 @@ export async function POST(req) {
             ...data,
             {
                 role: "assistant",
-                content: `Base your answers ONLY off of the relevant information and NOTHING else. Relevant Information: ${relevantDocs}`
+                content: `For questions related to Thoughtful AI, base your answers ONLY off of the relevant information and NOTHING else. Relevant Information: ${relevantDocs}`
             },
             {
                 role: 'user',
