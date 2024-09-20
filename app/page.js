@@ -4,6 +4,7 @@ import { Readex_Pro } from "next/font/google";
 import Image from "next/image";
 import { useState } from "react";
 
+// Actual Page development that can display conversation between the user and bot.
 
 export default function Home() {
   const [messages, setMessages] = useState([{

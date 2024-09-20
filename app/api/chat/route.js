@@ -10,11 +10,11 @@ const pc = new Pinecone({
 });
 
 
-const inference = new HfInference(process.env.HUGGINGFACE_API_KEY); // replace with your actual API key
+const inference = new HfInference(process.env.HUGGINGFACE_API_KEY); // Initialize HuggingFace
 
 // Embed and upsert a document
 async function upsertDocument(documentText, documentId) {
-    // console.log("Document", documentText)
+    
     const documentEmbedding = await inference.featureExtraction({
         model: "sentence-transformers/all-MiniLM-L6-v2",
         inputs: documentText
@@ -22,13 +22,18 @@ async function upsertDocument(documentText, documentId) {
 
     const upsertData = [
         {
-            id: documentId,  // Unique ID for the document
-            values: documentEmbedding,  // Embedding vector should be an array of numbers
+            id: documentId,  // Document ID
+            values: documentEmbedding,  // Embedding vector
             metadata: {
                 content: documentText
             }
         }
     ];
+
+    // Try and catch to deal with upsertion errors. 
+    // Ideally want to upsert just once but I made it to assume that the document is subject to change.
+    // But then need to take into account the older vectors. These are just thoughts and considerations.
+    // All those considerations won't be implemented. Just enough to fulfill the prompt due to time constraints.
 
     try {
         const response = await pc.index("chatbot").namespace("webinfo").upsert(
@@ -47,7 +52,7 @@ async function ensureIndexExists(indexName) {
         await pc.createIndex({
             name: indexName,
             dimension: 384, // Depends on embedding model
-            metric: 'cosine', // Depends on embedding model
+            metric: 'cosine', // Metric used for vector similarity
             spec: { 
                 serverless: { 
                     cloud: 'aws', 
@@ -66,6 +71,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
 export async function POST(req) {
+    // Go through RAG document, split it up and upsert
     const data = await req.json();
     const userQuery = data[data.length - 1].content;
     const fs = require('fs').promises;
@@ -86,9 +92,6 @@ export async function POST(req) {
     const allSplits = await textSplitter.splitDocuments(docs);
     console.log("Total splits:", allSplits.length);
 
-    // allSplits.forEach((split, index) => {
-    //     console.log(`Split ${index + 1}:`, split.pageContent);
-    // });
 
     console.log("Upserting document splits...");
 
@@ -106,7 +109,7 @@ export async function POST(req) {
     });
     console.log("User Query: ", userQuery)
 
-    // console.log(queryEmbedding)
+  
 
     // Step 2: Retrieve relevant documents from Pinecone
     const retrievalResponse = await pc.index('chatbot').namespace('webinfo').query({
@@ -117,7 +120,7 @@ export async function POST(req) {
     });
 
     const relevantDocs = retrievalResponse.matches.map(match => match.metadata.content).join(' ');
-    // console.log("Relevant documents:", relevantDocs);
+    console.log("Relevant documents:", relevantDocs);
 
     // Step 3: Pass the relevant documents and user's query to the generative model
     const completion = await groq.chat.completions.create({
@@ -129,7 +132,7 @@ export async function POST(req) {
             ...data,
             {
                 role: "assistant",
-                content: `Base your answers ONLY off of the relevant information and nothing else. Relevant Information: ${relevantDocs}`
+                content: `Base your answers ONLY off of the relevant information and NOTHING else. Relevant Information: ${relevantDocs}`
             },
             {
                 role: 'user',
